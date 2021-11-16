@@ -82,10 +82,11 @@ public class ChessBoard {
     
     private void checkMovesInLine(boolean color, int[] coord, int[] deltas, ArrayList<int[]> moveList){
         int[] newCoord = new int[] {coord[0]+deltas[0],coord[1]+deltas[1]};
-        while(isMovePossible(color,newCoord)<=1){
+        while(isMovePossible(color,newCoord)==0){
             moveList.add(newCoord.clone());
             newCoord[0]+=deltas[0]; newCoord[1]+=deltas[1];
         }
+        if(isMovePossible(color,newCoord)==1) moveList.add(newCoord);
     }
     
     /**
