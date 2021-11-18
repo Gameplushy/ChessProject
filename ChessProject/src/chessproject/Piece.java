@@ -5,15 +5,17 @@
  */
 package chessproject;
 
+import java.io.Serializable;
 import java.util.ArrayList;
 
 /**
  *
  * @author victo
  */
-public class Piece {
-    boolean isWhite;
-    PieceType type;
+public class Piece implements Serializable {
+    private boolean isWhite;
+    private PieceType type;
+
     
     
     public Piece(boolean isWhite, PieceType type){

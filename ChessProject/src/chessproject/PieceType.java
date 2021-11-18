@@ -5,11 +5,13 @@
  */
 package chessproject;
 
+import java.io.Serializable;
+
 /**
  *
  * @author victo
  */
-public enum PieceType {
+public enum PieceType implements Serializable{
     PAWN,
     ROOK,
     KNIGHT,

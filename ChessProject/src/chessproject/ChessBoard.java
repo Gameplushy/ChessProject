@@ -5,13 +5,14 @@
  */
 package chessproject;
 
+import java.io.Serializable;
 import java.util.ArrayList;
 
 /**
  *
  * @author victo
  */
-public class ChessBoard {
+public class ChessBoard implements Serializable {
     Piece[][] board;
     //ArrayList<Piece> aiArsenal;
     
