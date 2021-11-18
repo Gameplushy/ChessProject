@@ -16,6 +16,13 @@ public class Piece implements Serializable {
     private boolean isWhite;
     private PieceType type;
 
+    public boolean isWhite() {
+        return isWhite;
+    }
+
+    public PieceType getType() {
+        return type;
+    }
     
     
     public Piece(boolean isWhite, PieceType type){
