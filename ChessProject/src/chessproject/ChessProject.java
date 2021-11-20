@@ -3,8 +3,14 @@ package chessproject;
 import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.GridLayout;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
+import java.awt.event.WindowAdapter;
+import java.awt.event.WindowEvent;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
 import javax.swing.Icon;
 import javax.swing.ImageIcon;
 import javax.swing.JButton;
@@ -20,12 +26,30 @@ public class ChessProject extends JFrame implements AutreEventListener {
     ChessBoard chessBoard;
     BoardPressController controller;
     JButton[][] buttonGrid;
+    boolean shouldSave;
     
-    public ChessProject(){
+    public ChessProject(ChessBoard savedBoard){
+        shouldSave=true;
         this.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+        this.addWindowListener(new WindowAdapter() {
+            public void windowClosing(WindowEvent e) {
+                try{
+                    FileOutputStream saveFile = new FileOutputStream("src/savefile.txt"); //Supprime automatiquement ancienne sauvegarde
+                    if(shouldSave){
+                        ObjectOutputStream oos = new ObjectOutputStream(saveFile);
+                        oos.writeObject(chessBoard);
+                        oos.close();                        
+                    }
+                    saveFile.close();
+                    System.out.println("Fichier bien ouvert!");
+                }
+                catch(IOException exp){System.out.println("Fichier mal ouvert..."+exp.getMessage());}
+            }
+        });        
         buttonGrid = new JButton[7][8];
         setLayout(new GridLayout(7,8));
-        chessBoard = new ChessBoard();
+        chessBoard = (savedBoard!=null)?savedBoard:new ChessBoard();
+        chessBoard.getNewAEN();
         chessBoard.feedAEN(this); 
         controller = new BoardPressController(chessBoard);
         for(int i=0;i<7*8;i++){
@@ -38,7 +62,7 @@ public class ChessProject extends JFrame implements AutreEventListener {
             tile.addActionListener(controller);
             add(tile);
         }
-        chessBoard.initialiserPlateau();
+        chessBoard.initialiserPlateau(savedBoard==null);   
         this.pack();
         this.setVisible(true);
     }
@@ -50,7 +74,16 @@ public class ChessProject extends JFrame implements AutreEventListener {
     public static void main(String[] args) {
         SwingUtilities.invokeLater(new Runnable(){
             public void run(){
-                new ChessProject();
+                //new ChessProject();
+                try{
+                    FileInputStream saveFile = new FileInputStream("src/savefile.txt");
+                    ObjectInputStream ois = new ObjectInputStream(saveFile);
+                    new ChessProject((ChessBoard)ois.readObject());
+                    ois.close();
+                    System.out.println("Fichier bien ouvert!");
+                }
+                catch(ClassNotFoundException | FileNotFoundException e){new ChessProject(null);}
+                catch(IOException e){new ChessProject(null);}
             }
         });
         // TODO code application logic here
@@ -81,6 +114,7 @@ public class ChessProject extends JFrame implements AutreEventListener {
                 buttonGrid[abs][ord].setIcon(null);
                 break;
             }
+            case "WIN": shouldSave=false; break;
             default:
                 throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.                
         }

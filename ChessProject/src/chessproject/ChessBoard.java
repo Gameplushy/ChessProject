@@ -15,53 +15,65 @@ import java.util.Arrays;
  */
 public class ChessBoard implements Serializable {
     Piece[][] board;
-    Piece selectedPiece; int[] piecePosition;
+    transient Piece selectedPiece; transient int[] piecePosition;
     boolean isTurnForWhite;
-    AutreEventNotifieur aen;
-    ArrayList<int[]> possibleMoves;
+    transient AutreEventNotifieur aen;
+    transient ArrayList<int[]> possibleMoves;
     //ArrayList<Piece> aiArsenal;
     
-    public ChessBoard(){
-        aen = new AutreEventNotifieur();
+    public ChessBoard(){ 
         board = new Piece[7][8];
         isTurnForWhite=true; 
     }
     
-    public void initialiserPlateau(){
+    public void getNewAEN(){
+        aen = new AutreEventNotifieur();
+    }
+    
+    public void initialiserPlateau(boolean isNewGame){
         //aiArsenal = new ArrayList<>();
-        for(int i=0;i<8;i++){ //Add Pawns
-            Piece whitePawn = new Piece(true,PieceType.PAWN);
-            Piece blackPawn = new Piece(false,PieceType.PAWN);
-            placePiece(whitePawn,new int[] {1,i});
-            placePiece(blackPawn,new int[] {5,i});
-            //aiArsenal.add(blackPawn); 
+        if(isNewGame){
+            for(int i=0;i<8;i++){ //Add Pawns
+                Piece whitePawn = new Piece(true,PieceType.PAWN);
+                Piece blackPawn = new Piece(false,PieceType.PAWN);
+                placePiece(whitePawn,new int[] {1,i});
+                placePiece(blackPawn,new int[] {5,i});
+                //aiArsenal.add(blackPawn); 
+            }
+            for(int i : new int[] {0,7}){
+                Piece whiteRook = new Piece(true,PieceType.ROOK);
+                Piece blackRook = new Piece(false,PieceType.ROOK);
+                placePiece(whiteRook, new int[] {0,i});
+                placePiece(blackRook, new int[] {6,i});
+            }
+            for(int i : new int[] {1,6}){
+                Piece whiteKnight = new Piece(true,PieceType.KNIGHT);
+                Piece blackKnight = new Piece(false,PieceType.KNIGHT);
+                placePiece(whiteKnight,new int[] {0,i});
+                placePiece(blackKnight,new int[] {6,i});
+            }
+            for(int i : new int[] {2,5}){
+                Piece whiteBishop = new Piece(true,PieceType.BISHOP);
+                Piece blackBishop = new Piece(false,PieceType.BISHOP);
+                placePiece(whiteBishop,new int[] {0,i});
+                placePiece(blackBishop,new int[] {6,i});
+            }
+            Piece whiteQueen = new Piece(true,PieceType.QUEEN);
+            Piece blackQueen = new Piece(false,PieceType.QUEEN);
+            placePiece(whiteQueen,new int[] {0,3});
+            placePiece(blackQueen,new int[] {6,3});
+            Piece whiteKing = new Piece(true,PieceType.KING);
+            Piece blackKing = new Piece(false,PieceType.KING);
+            placePiece(whiteKing,new int[] {0,4});
+            placePiece(blackKing,new int[] {6,4});
         }
-        for(int i : new int[] {0,7}){
-            Piece whiteRook = new Piece(true,PieceType.ROOK);
-            Piece blackRook = new Piece(false,PieceType.ROOK);
-            placePiece(whiteRook, new int[] {0,i});
-            placePiece(blackRook, new int[] {6,i});
+        else{
+            for(int i=0;i<7;i++){
+                for(int j=0;j<8;j++){
+                    if(board[i][j]!=null) placePiece(board[i][j],new int[] {i,j});
+                }
+            }
         }
-        for(int i : new int[] {1,6}){
-            Piece whiteKnight = new Piece(true,PieceType.KNIGHT);
-            Piece blackKnight = new Piece(false,PieceType.KNIGHT);
-            placePiece(whiteKnight,new int[] {0,i});
-            placePiece(blackKnight,new int[] {6,i});
-        }
-        for(int i : new int[] {2,5}){
-            Piece whiteBishop = new Piece(true,PieceType.BISHOP);
-            Piece blackBishop = new Piece(false,PieceType.BISHOP);
-            placePiece(whiteBishop,new int[] {0,i});
-            placePiece(blackBishop,new int[] {6,i});
-        }
-        Piece whiteQueen = new Piece(true,PieceType.QUEEN);
-        Piece blackQueen = new Piece(false,PieceType.QUEEN);
-        placePiece(whiteQueen,new int[] {0,3});
-        placePiece(blackQueen,new int[] {6,3});
-        Piece whiteKing = new Piece(true,PieceType.KING);
-        Piece blackKing = new Piece(false,PieceType.KING);
-        placePiece(whiteKing,new int[] {0,4});
-        placePiece(blackKing,new int[] {6,4});
     }
     
     public void feedAEN(AutreEventListener ael){
@@ -71,17 +83,19 @@ public class ChessBoard implements Serializable {
     public void placePiece(Piece p, int[] coord){
         Piece capturedPiece = board[coord[0]][coord[1]];
         int winCondition = 0;
-        if(capturedPiece!=null && capturedPiece.getType()==PieceType.KING){
+        if(p!=capturedPiece && capturedPiece!=null && capturedPiece.getType()==PieceType.KING){ //1er pour initialiser plateau sauvegardé
             winCondition=capturedPiece.isWhite()?1:-1;
         }
         board[coord[0]][coord[1]]=p;
         aen.diffuserAutreEvent(new AutreEvent(this,"ADD:"+coord[0]+":"+coord[1]+":"+p.getType().toString()+":"+p.isWhite())); //Prevenir la vue
         if(winCondition!=0){
-            System.out.println("Le roi "+(winCondition==1?"blanc":"noir")+" est mort ! Longue vie au roi "+(winCondition==1?"noir !":"blanc !")); //Transformer ça en pop-up qui éteint le jeu
+            System.out.println("Le roi "+(winCondition==1?"blanc":"noir")+" est mort ! Longue vie au roi "+(winCondition==1?"noir !":"blanc !")); 
+            aen.diffuserAutreEvent(new AutreEvent(this,"WIN"));
+            //Transformer ça en pop-up qui éteint le jeu (ou le faire dans la vue)
         }
-        if(selectedPiece.getType()==PieceType.PAWN && ((selectedPiece.isWhite() && coord[0]==6) || (!selectedPiece.isWhite() && coord[0]==0))){
+        if(p.getType()==PieceType.PAWN && (coord[0]==6 || coord[0]==0)){ //Color doesn't matter
             System.out.println("Promotion! (q)ueen (r)ook (k)night (b)ishop");
-            //TODO
+            //TODO (ou faire comme pour victoire)
         }
     }
     
