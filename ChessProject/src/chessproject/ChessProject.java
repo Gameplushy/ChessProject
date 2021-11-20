@@ -58,23 +58,32 @@ public class ChessProject extends JFrame implements AutreEventListener {
 
     @Override
     public void actionADeclancher(AutreEvent evt) {
-        System.out.println(evt.getDonnee().toString());
         String[] commList = evt.getDonnee().toString().split(":");
-        for(String s : commList) System.out.println(s);
-        int abs = Integer.parseInt(commList[0]), ord = Integer.parseInt(commList[1]);
-        String piecepng = "Chess_";
-        switch(commList[2]){
-            case "QUEEN" : piecepng+="q"; break;
-            case "KING" : piecepng+="k"; break;
-            case "BISHOP" : piecepng+="b"; break;
-            case "KNIGHT" : piecepng+="n"; break;
-            case "PAWN" : piecepng+="p"; break;
-            case "ROOK" : piecepng+="r"; break;
+        switch(commList[0]){
+            case "ADD":{
+                int abs = Integer.parseInt(commList[1]), ord = Integer.parseInt(commList[2]);
+                String piecepng = "Chess_";
+                switch(commList[3]){
+                    case "QUEEN" : piecepng+="q"; break;
+                    case "KING" : piecepng+="k"; break;
+                    case "BISHOP" : piecepng+="b"; break;
+                    case "KNIGHT" : piecepng+="n"; break;
+                    case "PAWN" : piecepng+="p"; break;
+                    case "ROOK" : piecepng+="r"; break;
+                }
+                piecepng+=(commList[4].equals("true")?"l":"d")+"t60.png";
+                Icon ico = new ImageIcon("src/images/"+piecepng);
+                buttonGrid[abs][ord].setIcon(ico);
+                break;
+            }
+            case "DEL":{
+                int abs = Integer.parseInt(commList[1]), ord = Integer.parseInt(commList[2]);
+                buttonGrid[abs][ord].setIcon(null);
+                break;
+            }
+            default:
+                throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.                
         }
-        piecepng+=(commList[3].equals("true")?"l":"d")+"t60.png";
-        Icon ico = new ImageIcon("src/images/"+piecepng);
-        buttonGrid[abs][ord].setIcon(ico);
-        //throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
     }
     
 }
