@@ -15,10 +15,16 @@ import java.util.ArrayList;
 public class ChessBoard implements Serializable {
     Piece[][] board;
     boolean isTurnForWhite;
+    AutreEventNotifieur aen;
     //ArrayList<Piece> aiArsenal;
     
     public ChessBoard(){
+        aen = new AutreEventNotifieur();
         board = new Piece[7][8];
+        isTurnForWhite=true; 
+    }
+    
+    public void initialiserPlateau(){
         //aiArsenal = new ArrayList<>();
         for(int i=0;i<8;i++){ //Add Pawns
             Piece whitePawn = new Piece(true,PieceType.PAWN);
@@ -33,11 +39,35 @@ public class ChessBoard implements Serializable {
             placePiece(whiteRook, new int[] {0,i});
             placePiece(blackRook, new int[] {6,i});
         }
-       isTurnForWhite=true; 
+        for(int i : new int[] {1,6}){
+            Piece whiteKnight = new Piece(true,PieceType.KNIGHT);
+            Piece blackKnight = new Piece(false,PieceType.KNIGHT);
+            placePiece(whiteKnight,new int[] {0,i});
+            placePiece(blackKnight,new int[] {6,i});
+        }
+        for(int i : new int[] {2,5}){
+            Piece whiteBishop = new Piece(true,PieceType.BISHOP);
+            Piece blackBishop = new Piece(false,PieceType.BISHOP);
+            placePiece(whiteBishop,new int[] {0,i});
+            placePiece(blackBishop,new int[] {6,i});
+        }
+        Piece whiteQueen = new Piece(true,PieceType.QUEEN);
+        Piece blackQueen = new Piece(false,PieceType.QUEEN);
+        placePiece(whiteQueen,new int[] {0,3});
+        placePiece(blackQueen,new int[] {6,3});
+        Piece whiteKing = new Piece(true,PieceType.KING);
+        Piece blackKing = new Piece(false,PieceType.KING);
+        placePiece(whiteKing,new int[] {0,4});
+        placePiece(blackKing,new int[] {6,4});
+    }
+    
+    public void feedAEN(AutreEventListener ael){
+        aen.addAutreEventListener(ael);
     }
     
     public void placePiece(Piece p, int[] coord){
         board[coord[0]][coord[1]]=p;
+        aen.diffuserAutreEvent(new AutreEvent(this,coord[0]+":"+coord[1]+":"+p.getType().toString()+":"+p.isWhite()));
         //Prevenir la vue;
     }
     
@@ -50,7 +80,7 @@ public class ChessBoard implements Serializable {
         //Depends on type of piece
         switch(p.getType()){
             case PAWN:
-                int[] newCoord = new int[]{coord[0]+(p.isWhite()?-1:1),coord[1]};
+                int[] newCoord = new int[]{coord[0]+(p.isWhite()?1:-1),coord[1]};
                 if(isMovePossible(p.isWhite(),newCoord)<=1) possibleMoves.add(newCoord);
                 break;
             case BISHOP:
@@ -89,7 +119,6 @@ public class ChessBoard implements Serializable {
         }
         for(int[] c : possibleMoves)
             System.out.println(c[0]+""+c[1]);
-        
         //return possibleMoves;
     }
     
