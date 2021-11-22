@@ -8,6 +8,7 @@ package chessproject;
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Random;
 
 /**
  *
@@ -19,15 +20,17 @@ public class ChessBoard implements Serializable {
     boolean isTurnForWhite;
     transient AutreEventNotifieur aen;
     transient ArrayList<int[]> possibleMoves;
+    transient boolean partieFinie;
     //ArrayList<Piece> aiArsenal;
     
     public ChessBoard(){ 
         board = new Piece[7][8];
-        isTurnForWhite=true; 
+        isTurnForWhite=true;      
     }
     
-    public void getNewAEN(){
+    public void setTransientVars(){
         aen = new AutreEventNotifieur();
+        partieFinie=false;
     }
     
     public void initialiserPlateau(boolean isNewGame){
@@ -90,7 +93,8 @@ public class ChessBoard implements Serializable {
         aen.diffuserAutreEvent(new AutreEvent(this,"ADD:"+coord[0]+":"+coord[1]+":"+p.getType().toString()+":"+p.isWhite())); //Prevenir la vue
         if(winCondition!=0){
             System.out.println("Le roi "+(winCondition==1?"blanc":"noir")+" est mort ! Longue vie au roi "+(winCondition==1?"noir !":"blanc !")); 
-            aen.diffuserAutreEvent(new AutreEvent(this,"WIN"));
+            aen.diffuserAutreEvent(new AutreEvent(this,"WIN:"+(winCondition==1?"B":"W")));
+            partieFinie=true;
             //Transformer ça en pop-up qui éteint le jeu (ou le faire dans la vue)
         }
         if(p.getType()==PieceType.PAWN && (coord[0]==6 || coord[0]==0)){ //Color doesn't matter
@@ -109,7 +113,17 @@ public class ChessBoard implements Serializable {
             deletePiece();
             placePiece(selectedPiece,new int[]{abs,ord});
             endMove();
+            if(!partieFinie) AITurn();
         }; //move
+    }
+    
+    private void AITurn(){
+        Random rng = new Random();
+        while(possibleMoves==null || possibleMoves.size()<1) checkPossibleMoves(rng.nextInt(7),rng.nextInt(8));
+        deletePiece();
+        placePiece(selectedPiece,possibleMoves.get(rng.nextInt(possibleMoves.size())));
+        endMove();
+        if(partieFinie) isTurnForWhite = false;
     }
     
     private boolean isMoveLegal(int[] chosenMove){
@@ -134,9 +148,9 @@ public class ChessBoard implements Serializable {
     private void checkPossibleMoves(int abs, int ord){
         selectedPiece = board[abs][ord];
         piecePosition = new int[]{abs,ord};
+        if(selectedPiece==null||selectedPiece.isWhite()!=isTurnForWhite){ /*System.out.println("Not your piece!");*/ return;} //will be empty
+        //else System.out.println("Is a piece!");
         possibleMoves = new ArrayList<>();
-        if(selectedPiece==null||selectedPiece.isWhite()!=isTurnForWhite){ System.out.println("Not your piece!"); return;} //will be empty
-        else System.out.println("Is a piece!");
         //Depends on type of piece
         switch(selectedPiece.getType()){
             case PAWN:

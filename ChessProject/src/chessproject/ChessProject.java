@@ -31,6 +31,7 @@ public class ChessProject extends JFrame implements AutreEventListener {
     public ChessProject(ChessBoard savedBoard){
         shouldSave=true;
         this.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+        
         this.addWindowListener(new WindowAdapter() {
             public void windowClosing(WindowEvent e) {
                 try{
@@ -49,7 +50,7 @@ public class ChessProject extends JFrame implements AutreEventListener {
         buttonGrid = new JButton[7][8];
         setLayout(new GridLayout(7,8));
         chessBoard = (savedBoard!=null)?savedBoard:new ChessBoard();
-        chessBoard.getNewAEN();
+        chessBoard.setTransientVars();
         chessBoard.feedAEN(this); 
         controller = new BoardPressController(chessBoard);
         for(int i=0;i<7*8;i++){
@@ -106,17 +107,25 @@ public class ChessProject extends JFrame implements AutreEventListener {
                 }
                 piecepng+=(commList[4].equals("true")?"l":"d")+"t60.png";
                 Icon ico = new ImageIcon("src/images/"+piecepng);
-                buttonGrid[abs][ord].setIcon(ico);
+                SwingUtilities.invokeLater(new Runnable(){
+                    public void run(){
+                        buttonGrid[abs][ord].setIcon(ico);
+                    }
+                });   
                 break;
             }
             case "DEL":{
                 int abs = Integer.parseInt(commList[1]), ord = Integer.parseInt(commList[2]);
-                buttonGrid[abs][ord].setIcon(null);
+                SwingUtilities.invokeLater(new Runnable(){
+                    public void run(){
+                        buttonGrid[abs][ord].setIcon(null);
+                    }
+                });
                 break;
             }
-            case "WIN": shouldSave=false; break;
+            case "WIN": shouldSave=false; /*this.dispose();*/ break; //DISPOSE IS NOT THE WAY
             default:
-                throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.                
+                throw new UnsupportedOperationException("Not supported yet.");           
         }
     }
     
