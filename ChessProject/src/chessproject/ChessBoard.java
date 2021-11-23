@@ -9,6 +9,8 @@ import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Random;
+import java.util.concurrent.CountDownLatch;
+import javax.swing.SwingUtilities;
 
 /**
  *
@@ -90,15 +92,30 @@ public class ChessBoard implements Serializable {
             winCondition=capturedPiece.isWhite()?1:-1;
         }
         board[coord[0]][coord[1]]=p;
+        if(p.getType()==PieceType.PAWN && (coord[0]==6 || coord[0]==0)){ //Color doesn't matter
+            if(isTurnForWhite){
+                //aen.diffuserAutreEvent(new AutreEvent());
+                CountDownLatch cdl = new CountDownLatch(1);
+                PieceType newPieceType = PieceType.QUEEN; //
+                SwingUtilities.invokeLater(new Runnable(){
+                    public void run(){
+                        System.out.println(Thread.currentThread().getName());
+                        new PromotionWindow(cdl,newPieceType);
+                    }
+                });
+                try{
+                    System.out.println(Thread.currentThread().getName());
+                    cdl.await();
+                }
+                catch(InterruptedException ie) {}
+                p.promotion(newPieceType);
+            }
+            else p.promotion(PieceType.QUEEN);
+        }
         aen.diffuserAutreEvent(new AutreEvent(this,"ADD:"+coord[0]+":"+coord[1]+":"+p.getType().toString()+":"+p.isWhite())); //Prevenir la vue
         if(winCondition!=0){
             aen.diffuserAutreEvent(new AutreEvent(this,"WIN:"+((Boolean)(winCondition==-1)).toString())); //Fais appraître pop-up
             partieFinie=true;
-            //Transformer ça en pop-up qui éteint le jeu (ou le faire dans la vue)
-        }
-        if(p.getType()==PieceType.PAWN && (coord[0]==6 || coord[0]==0)){ //Color doesn't matter
-            System.out.println("Promotion! (q)ueen (r)ook (k)night (b)ishop");
-            //TODO (ou faire comme pour victoire)
         }
     }
     

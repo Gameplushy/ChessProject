@@ -28,4 +28,9 @@ public class Piece implements Serializable {
         this.isWhite=isWhite;
         this.type = type;
     }
+    
+    public void promotion(PieceType newType){
+        if(type!=PieceType.PAWN || newType==PieceType.PAWN || newType==PieceType.KING) throw new IllegalArgumentException(); //Just in case, var checker
+        type=newType; 
+    }
 }
