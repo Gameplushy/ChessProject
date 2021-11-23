@@ -39,10 +39,11 @@ public class ChessProject extends JFrame implements AutreEventListener {
                     if(shouldSave){
                         ObjectOutputStream oos = new ObjectOutputStream(saveFile);
                         oos.writeObject(chessBoard);
-                        oos.close();                        
+                        oos.close();
+                        System.out.println("Partie sauvegardée!");                        
                     }
                     saveFile.close();
-                    System.out.println("Fichier bien ouvert!");
+                    System.out.println("Sauvegarde détruite!");
                 }
                 catch(IOException exp){System.out.println("Fichier mal ouvert..."+exp.getMessage());}
             }
@@ -87,7 +88,6 @@ public class ChessProject extends JFrame implements AutreEventListener {
                 catch(IOException e){new ChessProject(null);}
             }
         });
-        // TODO code application logic here
     }
 
     @Override
@@ -123,7 +123,14 @@ public class ChessProject extends JFrame implements AutreEventListener {
                 });
                 break;
             }
-            case "WIN": shouldSave=false; /*this.dispose();*/ break; //DISPOSE IS NOT THE WAY
+            case "WIN": {
+                shouldSave=false;
+                SwingUtilities.invokeLater(new Runnable(){
+                    public void run(){
+                        new EndGame(Boolean.parseBoolean(commList[1]));
+                    }
+                });
+            } /*this.dispose();*/ break; //DISPOSE IS NOT THE WAY
             default:
                 throw new UnsupportedOperationException("Not supported yet.");           
         }

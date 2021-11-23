@@ -92,8 +92,7 @@ public class ChessBoard implements Serializable {
         board[coord[0]][coord[1]]=p;
         aen.diffuserAutreEvent(new AutreEvent(this,"ADD:"+coord[0]+":"+coord[1]+":"+p.getType().toString()+":"+p.isWhite())); //Prevenir la vue
         if(winCondition!=0){
-            System.out.println("Le roi "+(winCondition==1?"blanc":"noir")+" est mort ! Longue vie au roi "+(winCondition==1?"noir !":"blanc !")); 
-            aen.diffuserAutreEvent(new AutreEvent(this,"WIN:"+(winCondition==1?"B":"W")));
+            aen.diffuserAutreEvent(new AutreEvent(this,"WIN:"+((Boolean)(winCondition==-1)).toString())); //Fais appraître pop-up
             partieFinie=true;
             //Transformer ça en pop-up qui éteint le jeu (ou le faire dans la vue)
         }
@@ -104,11 +103,7 @@ public class ChessBoard implements Serializable {
     }
     
     public void doWhenPress(int abs, int ord){
-        ArrayList<int[]> one = new ArrayList<>();
-        one.add(new int[]{0,0});
-        one.add(new int[]{1,2});   
-        int[] two = new int[]{1,2};
-        if(selectedPiece==null|| !isMoveLegal(new int[] {abs,ord})) checkPossibleMoves(abs,ord);
+        if(selectedPiece==null || selectedPiece.isWhite()!=isTurnForWhite || !isMoveLegal(new int[] {abs,ord})) checkPossibleMoves(abs,ord);
         else{
             deletePiece();
             placePiece(selectedPiece,new int[]{abs,ord});
@@ -148,8 +143,8 @@ public class ChessBoard implements Serializable {
     private void checkPossibleMoves(int abs, int ord){
         selectedPiece = board[abs][ord];
         piecePosition = new int[]{abs,ord};
-        if(selectedPiece==null||selectedPiece.isWhite()!=isTurnForWhite){ /*System.out.println("Not your piece!");*/ return;} //will be empty
-        //else System.out.println("Is a piece!");
+        if(selectedPiece==null||selectedPiece.isWhite()!=isTurnForWhite){ System.out.println("Not your piece!"); return;} //will be empty
+        else System.out.println("Is a piece!");
         possibleMoves = new ArrayList<>();
         //Depends on type of piece
         switch(selectedPiece.getType()){
