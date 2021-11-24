@@ -42,8 +42,8 @@ public class ChessProject extends JFrame implements AutreEventListener {
                         oos.close();
                         System.out.println("Partie sauvegardée!");                        
                     }
-                    saveFile.close();
-                    System.out.println("Sauvegarde détruite!");
+                    else System.out.println("Sauvegarde détruite!");
+                    saveFile.close();                   
                 }
                 catch(IOException exp){System.out.println("Fichier mal ouvert..."+exp.getMessage());}
             }

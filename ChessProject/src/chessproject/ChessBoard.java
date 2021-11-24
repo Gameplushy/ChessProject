@@ -23,11 +23,13 @@ public class ChessBoard implements Serializable {
     transient AutreEventNotifieur aen;
     transient ArrayList<int[]> possibleMoves;
     transient boolean partieFinie;
+    Chrono timeLeftForWhite;
     //ArrayList<Piece> aiArsenal;
     
     public ChessBoard(){ 
         board = new Piece[7][8];
-        isTurnForWhite=true;      
+        isTurnForWhite=true;
+        timeLeftForWhite = new Chrono();
     }
     
     public void setTransientVars(){
@@ -79,6 +81,7 @@ public class ChessBoard implements Serializable {
                 }
             }
         }
+        timeLeftForWhite.startTimer();
     }
     
     public void feedAEN(AutreEventListener ael){
@@ -99,15 +102,10 @@ public class ChessBoard implements Serializable {
                 PieceType newPieceType = PieceType.QUEEN; //
                 SwingUtilities.invokeLater(new Runnable(){
                     public void run(){
-                        System.out.println(Thread.currentThread().getName());
                         new PromotionWindow(cdl,newPieceType);
                     }
                 });
-                try{
-                    System.out.println(Thread.currentThread().getName());
-                    cdl.await();
-                }
-                catch(InterruptedException ie) {}
+                //NOT WORKING
                 p.promotion(newPieceType);
             }
             else p.promotion(PieceType.QUEEN);
@@ -122,6 +120,7 @@ public class ChessBoard implements Serializable {
     public void doWhenPress(int abs, int ord){
         if(selectedPiece==null || selectedPiece.isWhite()!=isTurnForWhite || !isMoveLegal(new int[] {abs,ord})) checkPossibleMoves(abs,ord);
         else{
+            timeLeftForWhite.turnFinished();
             deletePiece();
             placePiece(selectedPiece,new int[]{abs,ord});
             endMove();
@@ -136,6 +135,7 @@ public class ChessBoard implements Serializable {
         placePiece(selectedPiece,possibleMoves.get(rng.nextInt(possibleMoves.size())));
         endMove();
         if(partieFinie) isTurnForWhite = false;
+        else timeLeftForWhite.startTimer();
     }
     
     private boolean isMoveLegal(int[] chosenMove){
