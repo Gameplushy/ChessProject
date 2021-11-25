@@ -8,7 +8,7 @@ package chessproject;
 import java.io.Serializable;
 
 /**
- *
+ * Classe pièce
  * @author victo
  */
 public class Piece implements Serializable {
@@ -22,7 +22,6 @@ public class Piece implements Serializable {
     public PieceType getType() {
         return type;
     }
-    
     
     public Piece(boolean isWhite, PieceType type){
         this.isWhite=isWhite;

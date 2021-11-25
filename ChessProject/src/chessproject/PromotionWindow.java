@@ -8,6 +8,8 @@ package chessproject;
 import java.awt.GridLayout;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.awt.event.WindowAdapter;
+import java.awt.event.WindowEvent;
 import java.util.concurrent.CountDownLatch;
 import javax.swing.Icon;
 import javax.swing.ImageIcon;
@@ -16,17 +18,20 @@ import javax.swing.JFrame;
 import javax.swing.JLabel;
 
 /**
- *
+ * Fenêtre de promotion (BUGGED)
  * @author victo
  */
 public class PromotionWindow extends JFrame implements ActionListener{
-    CountDownLatch cdl;
-    PieceType pt;
+    private CountDownLatch cdl;
     
-    public PromotionWindow(CountDownLatch cdl, PieceType pt){
+    public PromotionWindow(CountDownLatch cdl){
         this.cdl=cdl;
-        this.pt=pt;
         this.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
+        this.addWindowListener(new WindowAdapter() {
+            public void windowClosing(WindowEvent e) {
+                cdl.countDown();
+            }
+        });
         setLayout(new GridLayout(2,4));
         PieceType[] pieces = new PieceType[]{PieceType.QUEEN,PieceType.ROOK,PieceType.BISHOP,PieceType.KNIGHT};
         for(PieceType p : pieces){
@@ -37,7 +42,7 @@ public class PromotionWindow extends JFrame implements ActionListener{
                 case ROOK -> a="r";
                 case BISHOP -> a="b";
                 case KNIGHT -> a="n";
-                default -> a="q";
+                default -> a="q"; //Just in case
             }
             Icon i = new ImageIcon("src/images/Chess_"+a+"lt60.png");
             b.setIcon(i);
@@ -50,11 +55,13 @@ public class PromotionWindow extends JFrame implements ActionListener{
         this.pack();
         this.setVisible(true);    
     }
-
+    
     @Override
     public void actionPerformed(ActionEvent e) {
-        pt=PieceType.valueOf(e.getActionCommand());
+        PieceType pt=PieceType.valueOf(e.getActionCommand());
+        //aen.diffuserAutreEvent(new AutreEvent(this,pt));
+        //Le modèle reçoit la promotion par référence
         cdl.countDown();
-        //throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+        this.dispose();
     }
 }

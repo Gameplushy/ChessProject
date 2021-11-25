@@ -13,18 +13,17 @@ import java.util.concurrent.CountDownLatch;
 import javax.swing.SwingUtilities;
 
 /**
- *
+ * Le modèle
  * @author victo
  */
-public class ChessBoard implements Serializable {
-    Piece[][] board;
-    transient Piece selectedPiece; transient int[] piecePosition;
-    boolean isTurnForWhite;
-    transient AutreEventNotifieur aen;
-    transient ArrayList<int[]> possibleMoves;
-    transient boolean partieFinie;
-    Chrono timeLeftForWhite;
-    //ArrayList<Piece> aiArsenal;
+public class ChessBoard implements Serializable, AutreEventListener {
+    private Piece[][] board;
+    private transient Piece selectedPiece; private transient int[] piecePosition;
+    private boolean isTurnForWhite;
+    private transient AutreEventNotifieur aen;
+    private transient ArrayList<int[]> possibleMoves;
+    private transient boolean partieFinie;
+    private Chrono timeLeftForWhite;
     
     public ChessBoard(){ 
         board = new Piece[7][8];
@@ -34,18 +33,17 @@ public class ChessBoard implements Serializable {
     
     public void setTransientVars(){
         aen = new AutreEventNotifieur();
+        timeLeftForWhite.setAEN(aen,this);
         partieFinie=false;
     }
     
     public void initialiserPlateau(boolean isNewGame){
-        //aiArsenal = new ArrayList<>();
         if(isNewGame){
             for(int i=0;i<8;i++){ //Add Pawns
                 Piece whitePawn = new Piece(true,PieceType.PAWN);
                 Piece blackPawn = new Piece(false,PieceType.PAWN);
                 placePiece(whitePawn,new int[] {1,i});
                 placePiece(blackPawn,new int[] {5,i});
-                //aiArsenal.add(blackPawn); 
             }
             for(int i : new int[] {0,7}){
                 Piece whiteRook = new Piece(true,PieceType.ROOK);
@@ -88,7 +86,7 @@ public class ChessBoard implements Serializable {
         aen.addAutreEventListener(ael);
     }
     
-    public void placePiece(Piece p, int[] coord){
+    private void placePiece(Piece p, int[] coord){
         Piece capturedPiece = board[coord[0]][coord[1]];
         int winCondition = 0;
         if(p!=capturedPiece && capturedPiece!=null && capturedPiece.getType()==PieceType.KING){ //1er pour initialiser plateau sauvegardé
@@ -97,27 +95,31 @@ public class ChessBoard implements Serializable {
         board[coord[0]][coord[1]]=p;
         if(p.getType()==PieceType.PAWN && (coord[0]==6 || coord[0]==0)){ //Color doesn't matter
             if(isTurnForWhite){
-                //aen.diffuserAutreEvent(new AutreEvent());
                 CountDownLatch cdl = new CountDownLatch(1);
-                PieceType newPieceType = PieceType.QUEEN; //
+                PieceType newPieceType = PieceType.QUEEN;
                 SwingUtilities.invokeLater(new Runnable(){
                     public void run(){
-                        new PromotionWindow(cdl,newPieceType);
+                        PromotionWindow pw = new PromotionWindow(cdl);
                     }
                 });
-                //NOT WORKING
+                try{
+                    cdl.await();
+                }
+                catch(InterruptedException ie) {}
+                //NOT WORKING, EVENT QUEUE IS STUCK
                 p.promotion(newPieceType);
             }
             else p.promotion(PieceType.QUEEN);
         }
         aen.diffuserAutreEvent(new AutreEvent(this,"ADD:"+coord[0]+":"+coord[1]+":"+p.getType().toString()+":"+p.isWhite())); //Prevenir la vue
         if(winCondition!=0){
-            aen.diffuserAutreEvent(new AutreEvent(this,"WIN:"+((Boolean)(winCondition==-1)).toString())); //Fais appraître pop-up
+            aen.diffuserAutreEvent(new AutreEvent(this,"WIN:"+((winCondition==-1)?"W":"K")+"-DEFEAT")); //Fais appraître pop-up
             partieFinie=true;
         }
     }
     
     public void doWhenPress(int abs, int ord){
+        if(partieFinie) return;
         if(selectedPiece==null || selectedPiece.isWhite()!=isTurnForWhite || !isMoveLegal(new int[] {abs,ord})) checkPossibleMoves(abs,ord);
         else{
             timeLeftForWhite.turnFinished();
@@ -125,7 +127,7 @@ public class ChessBoard implements Serializable {
             placePiece(selectedPiece,new int[]{abs,ord});
             endMove();
             if(!partieFinie) AITurn();
-        }; //move
+        } //move
     }
     
     private void AITurn(){
@@ -134,8 +136,7 @@ public class ChessBoard implements Serializable {
         deletePiece();
         placePiece(selectedPiece,possibleMoves.get(rng.nextInt(possibleMoves.size())));
         endMove();
-        if(partieFinie) isTurnForWhite = false;
-        else timeLeftForWhite.startTimer();
+        if(!partieFinie) timeLeftForWhite.startTimer();
     }
     
     private boolean isMoveLegal(int[] chosenMove){
@@ -160,42 +161,42 @@ public class ChessBoard implements Serializable {
     private void checkPossibleMoves(int abs, int ord){
         selectedPiece = board[abs][ord];
         piecePosition = new int[]{abs,ord};
-        if(selectedPiece==null||selectedPiece.isWhite()!=isTurnForWhite){ System.out.println("Not your piece!"); return;} //will be empty
-        else System.out.println("Is a piece!");
+        if(selectedPiece==null||selectedPiece.isWhite()!=isTurnForWhite){ /*System.out.println("Not your piece!");*/ return;} //will be empty
+        //else System.out.println("Is a piece!");
         possibleMoves = new ArrayList<>();
         //Depends on type of piece
         switch(selectedPiece.getType()){
-            case PAWN:
+            case PAWN: //1 forward
                 int[] newCoord = new int[]{piecePosition[0]+(selectedPiece.isWhite()?1:-1),piecePosition[1]};
                 if(isMovePossible(selectedPiece.isWhite(),newCoord)<=1) possibleMoves.add(newCoord);
                 break;
-            case BISHOP:
+            case BISHOP: //Diagonal+ 
                 int[][] deltaListB = new int[][]{new int[]{-1,-1},new int[]{1,1},new int[]{-1,1},new int[]{1,-1}};
                 for(int[] delta : deltaListB){
                     checkMovesInLine(selectedPiece.isWhite(),piecePosition,delta,possibleMoves);
                 }
                 break;
-            case ROOK:
+            case ROOK: //Orthogonal+
                 int[][] deltaListR = new int[][]{new int[]{-1,0},new int[]{1,0},new int[]{0,1},new int[]{0,-1}};
                 for(int[] delta : deltaListR){
                     checkMovesInLine(selectedPiece.isWhite(),piecePosition,delta,possibleMoves);
                 }
                 break;
-            case KNIGHT:
+            case KNIGHT: //2 then 1
                 int[][] deltaListN = new int[][]{new int[]{-1,-2},new int[]{1,2},new int[]{-1,2},new int[]{1,-2},new int[]{-2,1},new int[]{2,1},new int[]{-2,-1},new int[]{2,-1}};
                 for(int[] delta : deltaListN){
                     int[] testedCoord = new int[] {piecePosition[0]+delta[0],piecePosition[1]+delta[1]};
                     if(isMovePossible(selectedPiece.isWhite(),testedCoord)<=1) possibleMoves.add(testedCoord);
                 }
                 break;
-            case KING:
+            case KING: //Orthogonal and Diagonal
                 int[][] deltaListK = new int[][]{new int[]{-1,-1},new int[]{1,1},new int[]{-1,1},new int[]{1,-1},new int[]{-1,0},new int[]{1,0},new int[]{0,1},new int[]{0,-1}};
                 for(int[] delta : deltaListK){
                     int[] testedCoord = new int[] {piecePosition[0]+delta[0],piecePosition[1]+delta[1]};
                     if(isMovePossible(selectedPiece.isWhite(),testedCoord)<=1) possibleMoves.add(testedCoord);
                 }
                 break;
-            case QUEEN:
+            case QUEEN://Orthogonal+ and Diagonal+
                 int[][] deltaListQ = new int[][]{new int[]{-1,-1},new int[]{1,1},new int[]{-1,1},new int[]{1,-1},new int[]{-1,0},new int[]{1,0},new int[]{0,1},new int[]{0,-1}};
                 for(int[] delta : deltaListQ){
                     checkMovesInLine(selectedPiece.isWhite(),piecePosition,delta,possibleMoves);
@@ -205,7 +206,6 @@ public class ChessBoard implements Serializable {
         }
         for(int[] c : possibleMoves)
             System.out.println(c[0]+""+c[1]);
-        //return possibleMoves;
     }
     
     private void checkMovesInLine(boolean color, int[] coord, int[] deltas, ArrayList<int[]> moveList){
@@ -229,5 +229,12 @@ public class ChessBoard implements Serializable {
         if(board[coord[0]][coord[1]]==null) return 0;
         if(isAColor!=board[coord[0]][coord[1]].isWhite()) return 1;
         return 2;
+    }
+
+    @Override
+    public void actionADeclancher(AutreEvent evt) { //NO MORE TIME
+        partieFinie=true;
+        isTurnForWhite=false;
+        aen.diffuserAutreEvent(new AutreEvent(this,"STOP"));
     }
 }

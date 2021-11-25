@@ -9,12 +9,12 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 
 /**
- *
+ * Le controlleur
  * @author victo
  */
 public class BoardPressController implements ActionListener{
 
-    ChessBoard model;
+    private ChessBoard model;
     
     public BoardPressController(ChessBoard m){
         model=m;

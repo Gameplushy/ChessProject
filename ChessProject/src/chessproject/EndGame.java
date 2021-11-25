@@ -11,16 +11,21 @@ import javax.swing.JFrame;
 import javax.swing.JLabel;
 
 /**
- *
+ * Fenêtre de fin de partie (roi tué)
  * @author victo
  */
 public class EndGame extends JFrame{
-    public EndGame(boolean whiteAlive){
+    public EndGame(String endResult){
+        String[] res = endResult.split("-");
         this.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
         setLayout(new GridLayout(2,1));
-        JLabel flavorText = new JLabel("Le roi "+(whiteAlive?"noir":"blanc")+" est mort ! Longue vie au roi "+(whiteAlive?"blanc !":"noir !"));
+        JLabel flavorText;
+        if(res[1].equals("TIME"))
+            flavorText = new JLabel("Temps écoulé! L'ordinateur gagne!");
+        else
+            flavorText = new JLabel("Le roi "+(res[0].equals("W")?"noir":"blanc")+" est mort ! Longue vie au roi "+(res[0].equals("W")?"blanc !":"noir !"));
         add(flavorText);
-        ImageIcon kingpng = new ImageIcon("src/images/Chess_k"+(whiteAlive?"l":"d")+"t60.png"); 
+        ImageIcon kingpng = new ImageIcon("src/images/Chess_k"+(res[0].equals("W")?"l":"d")+"t60.png"); 
         JLabel image = new JLabel(kingpng);
         add(image);
         this.pack();

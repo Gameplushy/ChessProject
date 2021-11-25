@@ -8,34 +8,43 @@ package chessproject;
 import java.io.Serializable;
 
 /**
- *
+ * Modèle de chronomètre
  * @author victo
  */
 public class Chrono implements Serializable{
-    int timeLeft;
-    boolean yourTurn;
-    transient Thread t;
+    private int timeLeft;
+    private boolean yourTurn;
+    private transient Thread t;
+    private transient AutreEventNotifieur Vaen;
+    private transient AutreEventNotifieur Maen;
     
     public Chrono(){
         timeLeft=3*60;
     }
     
+    public void setAEN(AutreEventNotifieur aen, ChessBoard cb){
+        this.Vaen=aen;
+        Maen = new AutreEventNotifieur();
+        Maen.addAutreEventListener(cb);
+    }
+
     public void startTimer(){
         yourTurn=true;
         Runnable afficheMessage = new Runnable() {
             public void run() {
                 try {
                     for (; yourTurn && (timeLeft > 0); timeLeft--) {
-                        //decompte.setText("" + i);
-                        System.out.println("Time left "+timeLeft);
+                        //System.out.println("Time left "+timeLeft);
+                        Vaen.diffuserAutreEvent(new AutreEvent(this,timeLeft));
                         Thread.sleep(1000);
                     }
                 } catch (InterruptedException ie) {
                 }
                 if (yourTurn) {
-                    //decompte.setText("0");
-                    //boutonArret.setEnabled(false);
                     System.out.println("0");
+                    Vaen.diffuserAutreEvent(new AutreEvent(this,0));
+                    Maen.diffuserAutreEvent(new AutreEvent(this,"DEAD"));
+                    //Envoyer au modèle comme quoi la partie est terminée.
                     System.out.println("Trop tard! Perdu!");
                 }
             }
@@ -45,7 +54,7 @@ public class Chrono implements Serializable{
     }
     
     public void turnFinished(){
-        yourTurn=false;
         t.interrupt();
+        yourTurn=false;     
     }
 }

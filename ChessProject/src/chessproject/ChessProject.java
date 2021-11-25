@@ -15,18 +15,20 @@ import javax.swing.Icon;
 import javax.swing.ImageIcon;
 import javax.swing.JButton;
 import javax.swing.JFrame;
+import javax.swing.JLabel;
 import javax.swing.SwingUtilities;
 
 /**
- *
+ * La vue
  * @author victo
  */
 public class ChessProject extends JFrame implements AutreEventListener {
 
-    ChessBoard chessBoard;
-    BoardPressController controller;
-    JButton[][] buttonGrid;
-    boolean shouldSave;
+    private ChessBoard chessBoard;
+    private BoardPressController controller;
+    private JButton[][] buttonGrid;
+    private boolean shouldSave;
+    private JLabel chronoLabel;
     
     public ChessProject(ChessBoard savedBoard){
         shouldSave=true;
@@ -47,9 +49,9 @@ public class ChessProject extends JFrame implements AutreEventListener {
                 }
                 catch(IOException exp){System.out.println("Fichier mal ouvert..."+exp.getMessage());}
             }
-        });        
+        });
         buttonGrid = new JButton[7][8];
-        setLayout(new GridLayout(7,8));
+        setLayout(new GridLayout(8,8));  
         chessBoard = (savedBoard!=null)?savedBoard:new ChessBoard();
         chessBoard.setTransientVars();
         chessBoard.feedAEN(this); 
@@ -58,13 +60,15 @@ public class ChessProject extends JFrame implements AutreEventListener {
             JButton tile = new JButton();
             tile.setPreferredSize(new Dimension(50,50));
             Color colTile = (i%2==(i/8)%2)?new Color(0,0,0): new Color(255,255,255); //Les tuiles noires ont une parité de colonne/rangée égale          
-            tile.setBackground(colTile);
+            tile.setBackground(colTile); //NE MARCHE PAS SUR MAC???
             tile.setActionCommand(((Integer)(6-(i/8))).toString()+" "+((Integer)(i%8)).toString());
             buttonGrid[6-(i/8)][i%8] = tile;
             tile.addActionListener(controller);
             add(tile);
         }
         chessBoard.initialiserPlateau(savedBoard==null);   
+        chronoLabel = new JLabel("3:00");
+        add(chronoLabel);
         this.pack();
         this.setVisible(true);
     }
@@ -76,7 +80,6 @@ public class ChessProject extends JFrame implements AutreEventListener {
     public static void main(String[] args) {
         SwingUtilities.invokeLater(new Runnable(){
             public void run(){
-                //new ChessProject();
                 try{
                     FileInputStream saveFile = new FileInputStream("src/savefile.txt");
                     ObjectInputStream ois = new ObjectInputStream(saveFile);
@@ -92,28 +95,30 @@ public class ChessProject extends JFrame implements AutreEventListener {
 
     @Override
     public void actionADeclancher(AutreEvent evt) {
-        String[] commList = evt.getDonnee().toString().split(":");
-        switch(commList[0]){
-            case "ADD":{
-                int abs = Integer.parseInt(commList[1]), ord = Integer.parseInt(commList[2]);
-                String piecepng = "Chess_";
-                switch(commList[3]){
-                    case "QUEEN" : piecepng+="q"; break;
-                    case "KING" : piecepng+="k"; break;
-                    case "BISHOP" : piecepng+="b"; break;
-                    case "KNIGHT" : piecepng+="n"; break;
-                    case "PAWN" : piecepng+="p"; break;
-                    case "ROOK" : piecepng+="r"; break;
-                }
-                piecepng+=(commList[4].equals("true")?"l":"d")+"t60.png";
-                Icon ico = new ImageIcon("src/images/"+piecepng);
-                SwingUtilities.invokeLater(new Runnable(){
-                    public void run(){
-                        buttonGrid[abs][ord].setIcon(ico);
+        System.out.println(Thread.currentThread().getName());
+        if(evt.getSource().getClass()==ChessBoard.class){
+           String[] commList = evt.getDonnee().toString().split(":");
+            switch(commList[0]){
+                case "ADD":{
+                    int abs = Integer.parseInt(commList[1]), ord = Integer.parseInt(commList[2]);
+                    String piecepng = "Chess_";
+                    switch(commList[3]){
+                        case "QUEEN" : piecepng+="q"; break;
+                        case "KING" : piecepng+="k"; break;
+                        case "BISHOP" : piecepng+="b"; break;
+                        case "KNIGHT" : piecepng+="n"; break;
+                        case "PAWN" : piecepng+="p"; break;
+                        case "ROOK" : piecepng+="r"; break;
                     }
-                });   
-                break;
-            }
+                    piecepng+=(commList[4].equals("true")?"l":"d")+"t60.png";
+                    Icon ico = new ImageIcon("src/images/"+piecepng);
+                    SwingUtilities.invokeLater(new Runnable(){
+                        public void run(){
+                            buttonGrid[abs][ord].setIcon(ico);
+                        }
+                    });   
+                    break;
+                }
             case "DEL":{
                 int abs = Integer.parseInt(commList[1]), ord = Integer.parseInt(commList[2]);
                 SwingUtilities.invokeLater(new Runnable(){
@@ -127,13 +132,31 @@ public class ChessProject extends JFrame implements AutreEventListener {
                 shouldSave=false;
                 SwingUtilities.invokeLater(new Runnable(){
                     public void run(){
-                        new EndGame(Boolean.parseBoolean(commList[1]));
+                        new EndGame(commList[1]);
                     }
                 });
-            } /*this.dispose();*/ break; //DISPOSE IS NOT THE WAY
+                break; 
+            }
+            case "STOP":{
+                shouldSave=false;
+                SwingUtilities.invokeLater(new Runnable(){
+                    public void run(){
+                        new EndGame("K-TIME");
+                    }
+                });
+                break;
+            }
             default:
                 throw new UnsupportedOperationException("Not supported yet.");           
+            }
         }
-    }
-    
+        else{
+            int timeLeft = Integer.parseInt(evt.getDonnee().toString());
+            SwingUtilities.invokeLater(new Runnable(){
+                    public void run(){
+                        chronoLabel.setText(timeLeft/60+":"+String.format("%02d",timeLeft%60)); 
+                    }
+            });                 
+        }
+    }  
 }
