@@ -126,7 +126,14 @@ public class ChessBoard implements Serializable, AutreEventListener {
             deletePiece();
             placePiece(selectedPiece,new int[]{abs,ord});
             endMove();
-            if(!partieFinie) AITurn();
+            if(!partieFinie) {
+                Thread ai = new Thread() {                    
+                    public void run() {
+                        AITurn();
+                    }
+                };
+                ai.start();
+            }
         } //move
     }
     
