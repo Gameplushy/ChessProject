@@ -129,7 +129,11 @@ public class ChessBoard implements Serializable, AutreEventListener {
             if(!partieFinie) {
                 Thread ai = new Thread() {                    
                     public void run() {
-                        AITurn();
+                        try{
+                        Thread.sleep(2000);
+                        }
+                        catch(InterruptedException ie){}
+                        finally{AITurn();}
                     }
                 };
                 ai.start();
