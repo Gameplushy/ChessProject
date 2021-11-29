@@ -17,9 +17,11 @@ public class Chrono implements Serializable{
     private transient Thread t;
     private transient AutreEventNotifieur Vaen;
     private transient AutreEventNotifieur Maen;
+    private char tag;
     
-    public Chrono(){
+    public Chrono(char tag){
         timeLeft=3*60;
+        this.tag=tag;
     }
     
     public void setAEN(AutreEventNotifieur aen, ChessBoard cb){
@@ -35,14 +37,14 @@ public class Chrono implements Serializable{
                 try {
                     for (; yourTurn && (timeLeft > 0); timeLeft--) {
                         //System.out.println("Time left "+timeLeft);
-                        Vaen.diffuserAutreEvent(new AutreEvent(this,timeLeft));
+                        Vaen.diffuserAutreEvent(new AutreEvent(this,timeLeft+":"+tag));
                         Thread.sleep(1000);
                     }
                 } catch (InterruptedException ie) {
                 }
                 if (yourTurn) {
                     System.out.println("0");
-                    Vaen.diffuserAutreEvent(new AutreEvent(this,0));
+                    Vaen.diffuserAutreEvent(new AutreEvent(this,0+":"+tag));
                     Maen.diffuserAutreEvent(new AutreEvent(this,"DEAD"));
                     //Envoyer au modèle comme quoi la partie est terminée.
                     System.out.println("Trop tard! Perdu!");

@@ -23,17 +23,20 @@ public class ChessBoard implements Serializable, AutreEventListener {
     private transient AutreEventNotifieur aen;
     private transient ArrayList<int[]> possibleMoves;
     private transient boolean partieFinie;
-    private Chrono timeLeftForWhite;
+    private Chrono whiteTimer;
+    private Chrono blackTimer;
     
     public ChessBoard(){ 
         board = new Piece[7][8];
         isTurnForWhite=true;
-        timeLeftForWhite = new Chrono();
+        whiteTimer = new Chrono('W');
+        blackTimer = new Chrono('K');
     }
     
     public void setTransientVars(){
         aen = new AutreEventNotifieur();
-        timeLeftForWhite.setAEN(aen,this);
+        whiteTimer.setAEN(aen,this);
+        blackTimer.setAEN(aen,this);
         partieFinie=false;
     }
     
@@ -79,7 +82,16 @@ public class ChessBoard implements Serializable, AutreEventListener {
                 }
             }
         }
-        timeLeftForWhite.startTimer();
+        if(isTurnForWhite) whiteTimer.startTimer();
+        else{
+                Thread ai = new Thread() {                    
+                    public void run() {
+                       blackTimer.startTimer();
+                       AITurn();
+                    }
+                };
+                ai.start();            
+        }
     }
     
     public void feedAEN(AutreEventListener ael){
@@ -122,13 +134,14 @@ public class ChessBoard implements Serializable, AutreEventListener {
         if(partieFinie) return;
         if(selectedPiece==null || selectedPiece.isWhite()!=isTurnForWhite || !isMoveLegal(new int[] {abs,ord})) checkPossibleMoves(abs,ord);
         else{
-            timeLeftForWhite.turnFinished();
+            whiteTimer.turnFinished();
             deletePiece();
             placePiece(selectedPiece,new int[]{abs,ord});
             endMove();
             if(!partieFinie) {
                 Thread ai = new Thread() {                    
                     public void run() {
+                        blackTimer.startTimer();
                         try{
                         Thread.sleep(2000);
                         }
@@ -142,12 +155,14 @@ public class ChessBoard implements Serializable, AutreEventListener {
     }
     
     private void AITurn(){
+        
         Random rng = new Random();
         while(possibleMoves==null || possibleMoves.size()<1) checkPossibleMoves(rng.nextInt(7),rng.nextInt(8));
         deletePiece();
         placePiece(selectedPiece,possibleMoves.get(rng.nextInt(possibleMoves.size())));
         endMove();
-        if(!partieFinie) timeLeftForWhite.startTimer();
+        blackTimer.turnFinished();
+        if(!partieFinie) whiteTimer.startTimer();
     }
     
     private boolean isMoveLegal(int[] chosenMove){

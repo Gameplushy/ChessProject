@@ -28,7 +28,8 @@ public class ChessProject extends JFrame implements AutreEventListener {
     private BoardPressController controller;
     private JButton[][] buttonGrid;
     private boolean shouldSave;
-    private JLabel chronoLabel;
+    private JLabel whiteChrono;
+    private JLabel blackChrono;
     
     public ChessProject(ChessBoard savedBoard){
         shouldSave=true;
@@ -67,8 +68,10 @@ public class ChessProject extends JFrame implements AutreEventListener {
             add(tile);
         }
         chessBoard.initialiserPlateau(savedBoard==null);   
-        chronoLabel = new JLabel("3:00");
-        add(chronoLabel);
+        whiteChrono = new JLabel("3:00");
+        add(whiteChrono);
+        blackChrono = new JLabel("3:00");
+        add(blackChrono);
         this.pack();
         this.setVisible(true);
     }
@@ -95,7 +98,7 @@ public class ChessProject extends JFrame implements AutreEventListener {
 
     @Override
     public void actionADeclancher(AutreEvent evt) {
-        System.out.println(Thread.currentThread().getName());
+        //System.out.println(Thread.currentThread().getName());
         if(evt.getSource().getClass()==ChessBoard.class){
            String[] commList = evt.getDonnee().toString().split(":");
             switch(commList[0]){
@@ -151,10 +154,14 @@ public class ChessProject extends JFrame implements AutreEventListener {
             }
         }
         else{
-            int timeLeft = Integer.parseInt(evt.getDonnee().toString());
+            String[] commList = evt.getDonnee().toString().split(":");
+            int timeLeft = Integer.parseInt(commList[0]);
             SwingUtilities.invokeLater(new Runnable(){
                     public void run(){
-                        chronoLabel.setText(timeLeft/60+":"+String.format("%02d",timeLeft%60)); 
+                        if(commList[1].equals("W"))
+                            whiteChrono.setText(timeLeft/60+":"+String.format("%02d",timeLeft%60)); 
+                        else
+                            blackChrono.setText(timeLeft/60+":"+String.format("%02d",timeLeft%60)); 
                     }
             });                 
         }
