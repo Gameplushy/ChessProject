@@ -155,7 +155,7 @@ public class ChessBoard implements Serializable, AutreEventListener {
     }
     
     private void AITurn(){
-        
+        if(partieFinie) return;
         Random rng = new Random();
         while(possibleMoves==null || possibleMoves.size()<1) checkPossibleMoves(rng.nextInt(7),rng.nextInt(8));
         deletePiece();
@@ -260,7 +260,7 @@ public class ChessBoard implements Serializable, AutreEventListener {
     @Override
     public void actionADeclancher(AutreEvent evt) { //NO MORE TIME
         partieFinie=true;
-        isTurnForWhite=false;
-        aen.diffuserAutreEvent(new AutreEvent(this,"STOP"));
+        //isTurnForWhite=false;
+        aen.diffuserAutreEvent(new AutreEvent(this,"WIN:"+evt.getDonnee()+"-TIME"));
     }
 }

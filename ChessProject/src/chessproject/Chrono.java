@@ -20,7 +20,7 @@ public class Chrono implements Serializable{
     private char tag;
     
     public Chrono(char tag){
-        timeLeft=3*60;
+        timeLeft=3;
         this.tag=tag;
     }
     
@@ -45,7 +45,7 @@ public class Chrono implements Serializable{
                 if (yourTurn) {
                     System.out.println("0");
                     Vaen.diffuserAutreEvent(new AutreEvent(this,0+":"+tag));
-                    Maen.diffuserAutreEvent(new AutreEvent(this,"DEAD"));
+                    Maen.diffuserAutreEvent(new AutreEvent(this,tag));
                     //Envoyer au modèle comme quoi la partie est terminée.
                     System.out.println("Trop tard! Perdu!");
                 }

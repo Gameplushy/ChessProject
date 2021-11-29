@@ -20,8 +20,10 @@ public class EndGame extends JFrame{
         this.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
         setLayout(new GridLayout(2,1));
         JLabel flavorText;
-        if(res[1].equals("TIME"))
-            flavorText = new JLabel("Temps écoulé! L'ordinateur gagne!");
+        if(res[1].equals("TIME")){
+            flavorText = new JLabel("Temps écoulé! "+(res[0].equals("W")?"L'ordinateur":"Le joueur")+" gagne!");
+            res[0]=res[0].equals("W")?"K":"W";
+        }
         else
             flavorText = new JLabel("Le roi "+(res[0].equals("W")?"noir":"blanc")+" est mort ! Longue vie au roi "+(res[0].equals("W")?"blanc !":"noir !"));
         add(flavorText);

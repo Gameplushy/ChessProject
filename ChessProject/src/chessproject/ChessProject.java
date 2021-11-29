@@ -140,15 +140,6 @@ public class ChessProject extends JFrame implements AutreEventListener {
                 });
                 break; 
             }
-            case "STOP":{
-                shouldSave=false;
-                SwingUtilities.invokeLater(new Runnable(){
-                    public void run(){
-                        new EndGame("K-TIME");
-                    }
-                });
-                break;
-            }
             default:
                 throw new UnsupportedOperationException("Not supported yet.");           
             }
