@@ -21,17 +21,15 @@ import javax.swing.JLabel;
  * Fenêtre de promotion (BUGGED)
  * @author victo
  */
-public class PromotionWindow extends JFrame implements ActionListener{
-    private CountDownLatch cdl;
+public class PromotionWindow extends JFrame implements AutreEventListener{
+    private PromotionController ctrl;
+    private PromotionModel model;
     
-    public PromotionWindow(CountDownLatch cdl){
-        this.cdl=cdl;
+    public PromotionWindow(PromotionModel model,PromotionController ctrl){
+        this.model=model;
+        this.ctrl=ctrl;
         this.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
-        this.addWindowListener(new WindowAdapter() {
-            public void windowClosing(WindowEvent e) {
-                cdl.countDown();
-            }
-        });
+        this.addWindowListener(ctrl);
         setLayout(new GridLayout(2,4));
         PieceType[] pieces = new PieceType[]{PieceType.QUEEN,PieceType.ROOK,PieceType.BISHOP,PieceType.KNIGHT};
         for(PieceType p : pieces){
@@ -47,7 +45,7 @@ public class PromotionWindow extends JFrame implements ActionListener{
             Icon i = new ImageIcon("src/images/Chess_"+a+"lt60.png");
             b.setIcon(i);
             b.setActionCommand(p.name());
-            b.addActionListener(this);
+            b.addActionListener(ctrl);
             add(b);
         }
         JLabel flavorText = new JLabel("Promotion ! Choisissez de quoi remplacer votre pion.");
@@ -55,13 +53,9 @@ public class PromotionWindow extends JFrame implements ActionListener{
         this.pack();
         this.setVisible(true);    
     }
-    
+
     @Override
-    public void actionPerformed(ActionEvent e) {
-        PieceType pt=PieceType.valueOf(e.getActionCommand());
-        //aen.diffuserAutreEvent(new AutreEvent(this,pt));
-        //Le modèle reçoit la promotion par référence
-        cdl.countDown();
+    public void actionADeclancher(AutreEvent evt) {
         this.dispose();
     }
 }

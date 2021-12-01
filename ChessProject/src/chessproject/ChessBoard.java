@@ -25,6 +25,7 @@ public class ChessBoard implements Serializable, AutreEventListener {
     private transient boolean partieFinie;
     private Chrono whiteTimer;
     private Chrono blackTimer;
+    private transient CountDownLatch cdl;
     
     public ChessBoard(){ 
         board = new Piece[7][8];
@@ -107,11 +108,12 @@ public class ChessBoard implements Serializable, AutreEventListener {
         board[coord[0]][coord[1]]=p;
         if(p.getType()==PieceType.PAWN && (coord[0]==6 || coord[0]==0)){ //Color doesn't matter
             if(isTurnForWhite){
-                CountDownLatch cdl = new CountDownLatch(1);
-                PieceType newPieceType = PieceType.QUEEN;
+                cdl = new CountDownLatch(1);
+                PromotionTransferrer newPieceType = new PromotionTransferrer();
                 SwingUtilities.invokeLater(new Runnable(){
                     public void run(){
-                        PromotionWindow pw = new PromotionWindow(cdl);
+                        PromotionModel pm = new PromotionModel(cdl,newPieceType);
+                        //PromotionWindow pw = new PromotionWindow(cdl);
                     }
                 });
                 try{
@@ -119,7 +121,7 @@ public class ChessBoard implements Serializable, AutreEventListener {
                 }
                 catch(InterruptedException ie) {}
                 //NOT WORKING, EVENT QUEUE IS STUCK
-                p.promotion(newPieceType);
+                p.promotion(newPieceType.pt);
             }
             else p.promotion(PieceType.QUEEN);
         }
@@ -132,30 +134,36 @@ public class ChessBoard implements Serializable, AutreEventListener {
     
     public void doWhenPress(int abs, int ord){
         if(partieFinie) return;
-        if(selectedPiece==null || selectedPiece.isWhite()!=isTurnForWhite || !isMoveLegal(new int[] {abs,ord})) checkPossibleMoves(abs,ord);
-        else{
-            whiteTimer.turnFinished();
-            deletePiece();
-            placePiece(selectedPiece,new int[]{abs,ord});
-            endMove();
-            if(!partieFinie) {
-                Thread ai = new Thread() {                    
-                    public void run() {
-                        blackTimer.startTimer();
-                        try{
-                        Thread.sleep(2000);
-                        }
-                        catch(InterruptedException ie){}
-                        finally{AITurn();}
+        Thread t = new Thread(){
+            public void run(){
+                if(selectedPiece==null || selectedPiece.isWhite()!=isTurnForWhite || !isMoveLegal(new int[] {abs,ord})) checkPossibleMoves(abs,ord);
+                else{
+                    whiteTimer.turnFinished();
+                    deletePiece();
+                    placePiece(selectedPiece,new int[]{abs,ord});
+                    endMove();
+                    if(!partieFinie) {
+                        Thread ai = new Thread() {                    
+                            public void run() {
+                                blackTimer.startTimer();
+                                try{
+                                Thread.sleep(2000);
+                                }
+                                catch(InterruptedException ie){}
+                                finally{AITurn();}
+                            }
+                        };
+                        ai.start();
                     }
-                };
-                ai.start();
+                } //move                
             }
-        } //move
+        };
+        t.start();
     }
     
     private void AITurn(){
         if(partieFinie) return;
+        //try{if(cdl!=null) cdl.await();} catch(InterruptedException ie){}
         Random rng = new Random();
         while(possibleMoves==null || possibleMoves.size()<1) checkPossibleMoves(rng.nextInt(7),rng.nextInt(8));
         deletePiece();

@@ -20,7 +20,7 @@ public class Chrono implements Serializable{
     private char tag;
     
     public Chrono(char tag){
-        timeLeft=3;
+        timeLeft=3*60;
         this.tag=tag;
     }
     

@@ -98,7 +98,6 @@ public class ChessProject extends JFrame implements AutreEventListener {
 
     @Override
     public void actionADeclancher(AutreEvent evt) {
-        //System.out.println(Thread.currentThread().getName());
         if(evt.getSource().getClass()==ChessBoard.class){
            String[] commList = evt.getDonnee().toString().split(":");
             switch(commList[0]){
