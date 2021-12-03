@@ -36,18 +36,14 @@ public class Chrono implements Serializable{
             public void run() {
                 try {
                     for (; yourTurn && (timeLeft > 0); timeLeft--) {
-                        //System.out.println("Time left "+timeLeft);
                         Vaen.diffuserAutreEvent(new AutreEvent(this,timeLeft+":"+tag));
                         Thread.sleep(1000);
                     }
                 } catch (InterruptedException ie) {
                 }
                 if (yourTurn) {
-                    System.out.println("0");
                     Vaen.diffuserAutreEvent(new AutreEvent(this,0+":"+tag));
-                    Maen.diffuserAutreEvent(new AutreEvent(this,tag));
-                    //Envoyer au modèle comme quoi la partie est terminée.
-                    System.out.println("Trop tard! Perdu!");
+                    Maen.diffuserAutreEvent(new AutreEvent(this,tag)); //Envoyer au modèle comme quoi la partie est terminée.
                 }
             }
         };

@@ -25,7 +25,7 @@ public class BoardPressController implements ActionListener{
         int abs = Integer.parseInt(e.getActionCommand().substring(0, 1));
         int ord = Integer.parseInt(e.getActionCommand().substring(2, 3));
         model.doWhenPress(abs,ord);
-        System.out.println("You pressed "+abs+ord);
+        //System.out.println("You pressed "+abs+ord);
     }
     
 }

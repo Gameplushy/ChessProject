@@ -28,8 +28,6 @@ public class PromotionController extends WindowAdapter implements ActionListener
     public void actionPerformed(ActionEvent e) {
         PieceType pt=PieceType.valueOf(e.getActionCommand());
         aen.diffuserAutreEvent(new AutreEvent(this,pt));
-        //cdl.countDown();
-        //this.dispose();
     }
     
     @Override

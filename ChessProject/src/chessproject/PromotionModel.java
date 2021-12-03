@@ -25,13 +25,11 @@ public class PromotionModel implements AutreEventListener {
     }
 
     @Override
-    public void actionADeclancher(AutreEvent evt) {
-        pieceType.pt = ((PieceType)(evt.getDonnee())); //Doesn't send to main
-        System.out.println(pieceType.toString());
+    public void actionADeclancher(AutreEvent evt) { //Bring back player's choice
+        pieceType.pt = ((PieceType)(evt.getDonnee()));
         AutreEventNotifieur aen = new AutreEventNotifieur();
         aen.addAutreEventListener(view);
         aen.diffuserAutreEvent(new AutreEvent(this,"DIE"));
         cdl.countDown();
-        //throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
     }
 }

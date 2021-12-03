@@ -6,7 +6,7 @@
 package chessproject;
 
 /**
- *
+ * Wrapper pour changer un PieceType par référence
  * @author victo
  */
 public class PromotionTransferrer {

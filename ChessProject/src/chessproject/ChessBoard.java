@@ -26,6 +26,7 @@ public class ChessBoard implements Serializable, AutreEventListener {
     private Chrono whiteTimer;
     private Chrono blackTimer;
     private transient CountDownLatch cdl;
+    private transient boolean promotionTime;
     
     public ChessBoard(){ 
         board = new Piece[7][8];
@@ -39,6 +40,7 @@ public class ChessBoard implements Serializable, AutreEventListener {
         whiteTimer.setAEN(aen,this);
         blackTimer.setAEN(aen,this);
         partieFinie=false;
+        promotionTime=false;
     }
     
     public void initialiserPlateau(boolean isNewGame){
@@ -102,25 +104,25 @@ public class ChessBoard implements Serializable, AutreEventListener {
     private void placePiece(Piece p, int[] coord){
         Piece capturedPiece = board[coord[0]][coord[1]];
         int winCondition = 0;
-        if(p!=capturedPiece && capturedPiece!=null && capturedPiece.getType()==PieceType.KING){ //1er pour initialiser plateau sauvegardé
+        if(p!=capturedPiece && capturedPiece!=null && capturedPiece.getType()==PieceType.KING){ //1ère condition pour initialiser plateau sauvegardé
             winCondition=capturedPiece.isWhite()?1:-1;
         }
         board[coord[0]][coord[1]]=p;
         if(p.getType()==PieceType.PAWN && (coord[0]==6 || coord[0]==0)){ //Color doesn't matter
             if(isTurnForWhite){
+                promotionTime=true;
                 cdl = new CountDownLatch(1);
                 PromotionTransferrer newPieceType = new PromotionTransferrer();
                 SwingUtilities.invokeLater(new Runnable(){
                     public void run(){
                         PromotionModel pm = new PromotionModel(cdl,newPieceType);
-                        //PromotionWindow pw = new PromotionWindow(cdl);
                     }
                 });
                 try{
                     cdl.await();
+                    promotionTime=false;
                 }
                 catch(InterruptedException ie) {}
-                //NOT WORKING, EVENT QUEUE IS STUCK
                 p.promotion(newPieceType.pt);
             }
             else p.promotion(PieceType.QUEEN);
@@ -133,7 +135,7 @@ public class ChessBoard implements Serializable, AutreEventListener {
     }
     
     public void doWhenPress(int abs, int ord){
-        if(partieFinie) return;
+        if(partieFinie||promotionTime) return;
         Thread t = new Thread(){
             public void run(){
                 if(selectedPiece==null || selectedPiece.isWhite()!=isTurnForWhite || !isMoveLegal(new int[] {abs,ord})) checkPossibleMoves(abs,ord);
@@ -147,7 +149,8 @@ public class ChessBoard implements Serializable, AutreEventListener {
                             public void run() {
                                 blackTimer.startTimer();
                                 try{
-                                Thread.sleep(2000);
+                                    Random rng = new Random();
+                                    Thread.sleep(rng.nextInt(5001));
                                 }
                                 catch(InterruptedException ie){}
                                 finally{AITurn();}
@@ -163,9 +166,9 @@ public class ChessBoard implements Serializable, AutreEventListener {
     
     private void AITurn(){
         if(partieFinie) return;
-        //try{if(cdl!=null) cdl.await();} catch(InterruptedException ie){}
         Random rng = new Random();
         while(possibleMoves==null || possibleMoves.size()<1) checkPossibleMoves(rng.nextInt(7),rng.nextInt(8));
+        try{Thread.sleep(possibleMoves.size()*100);} catch(InterruptedException ie){}
         deletePiece();
         placePiece(selectedPiece,possibleMoves.get(rng.nextInt(possibleMoves.size())));
         endMove();
@@ -238,8 +241,8 @@ public class ChessBoard implements Serializable, AutreEventListener {
                 break;
             
         }
-        for(int[] c : possibleMoves)
-            System.out.println(c[0]+""+c[1]);
+        /*for(int[] c : possibleMoves)
+            System.out.println(c[0]+""+c[1]);*/
     }
     
     private void checkMovesInLine(boolean color, int[] coord, int[] deltas, ArrayList<int[]> moveList){
