@@ -138,7 +138,7 @@ public class ChessBoard implements Serializable, AutreEventListener {
         if(partieFinie||promotionTime) return;
         Thread t = new Thread(){
             public void run(){
-                if(selectedPiece==null || selectedPiece.isWhite()!=isTurnForWhite || !isMoveLegal(new int[] {abs,ord})) checkPossibleMoves(abs,ord);
+                if(selectedPiece==null || selectedPiece.isWhite()!=isTurnForWhite || !isMoveLegal(new int[] {abs,ord})) checkPossibleMoves(abs,ord,board,false);
                 else{
                     whiteTimer.turnFinished();
                     deletePiece();
@@ -148,12 +148,12 @@ public class ChessBoard implements Serializable, AutreEventListener {
                         Thread ai = new Thread() {                    
                             public void run() {
                                 blackTimer.startTimer();
-                                try{
+                                /*try{
                                     Random rng = new Random();
                                     Thread.sleep(rng.nextInt(5001));
                                 }
                                 catch(InterruptedException ie){}
-                                finally{AITurn();}
+                                finally{*/AITurn();//}
                             }
                         };
                         ai.start();
@@ -167,10 +167,13 @@ public class ChessBoard implements Serializable, AutreEventListener {
     private void AITurn(){
         if(partieFinie) return;
         Random rng = new Random();
-        while(possibleMoves==null || possibleMoves.size()<1) checkPossibleMoves(rng.nextInt(7),rng.nextInt(8));
-        try{Thread.sleep(possibleMoves.size()*100);} catch(InterruptedException ie){}
+        //while(possibleMoves==null || possibleMoves.size()<1) checkPossibleMoves(rng.nextInt(7),rng.nextInt(8),false);
+        MinMaxNode mmn = minMax(board,0,false,null);
+        //try{Thread.sleep(possibleMoves.size()*100);} catch(InterruptedException ie){}
+        piecePosition = mmn.getFrom();
+        selectedPiece = board[mmn.getFrom()[0]][mmn.getFrom()[1]];
         deletePiece();
-        placePiece(selectedPiece,possibleMoves.get(rng.nextInt(possibleMoves.size())));
+        placePiece(selectedPiece,mmn.getTo());
         endMove();
         blackTimer.turnFinished();
         if(!partieFinie) whiteTimer.startTimer();
@@ -195,48 +198,48 @@ public class ChessBoard implements Serializable, AutreEventListener {
         isTurnForWhite=!isTurnForWhite;
     }
     
-    private void checkPossibleMoves(int abs, int ord){
-        selectedPiece = board[abs][ord];
+    private void checkPossibleMoves(int abs, int ord,Piece[][] boardToCheckOn, boolean usingMinMax){
+        selectedPiece = boardToCheckOn[abs][ord];
         piecePosition = new int[]{abs,ord};
-        if(selectedPiece==null||selectedPiece.isWhite()!=isTurnForWhite){ /*System.out.println("Not your piece!");*/ return;} //will be empty
+        if(!usingMinMax && (selectedPiece==null||selectedPiece.isWhite()!=isTurnForWhite)){ /*System.out.println("Not your piece!");*/ return;} //will be empty
         //else System.out.println("Is a piece!");
         possibleMoves = new ArrayList<>();
         //Depends on type of piece
         switch(selectedPiece.getType()){
             case PAWN: //1 forward
                 int[] newCoord = new int[]{piecePosition[0]+(selectedPiece.isWhite()?1:-1),piecePosition[1]};
-                if(isMovePossible(selectedPiece.isWhite(),newCoord)<=1) possibleMoves.add(newCoord);
+                if(isMovePossible(selectedPiece.isWhite(),newCoord,boardToCheckOn)<=1) possibleMoves.add(newCoord);
                 break;
             case BISHOP: //Diagonal+ 
                 int[][] deltaListB = new int[][]{new int[]{-1,-1},new int[]{1,1},new int[]{-1,1},new int[]{1,-1}};
                 for(int[] delta : deltaListB){
-                    checkMovesInLine(selectedPiece.isWhite(),piecePosition,delta,possibleMoves);
+                    checkMovesInLine(selectedPiece.isWhite(),piecePosition,delta,possibleMoves,boardToCheckOn);
                 }
                 break;
             case ROOK: //Orthogonal+
                 int[][] deltaListR = new int[][]{new int[]{-1,0},new int[]{1,0},new int[]{0,1},new int[]{0,-1}};
                 for(int[] delta : deltaListR){
-                    checkMovesInLine(selectedPiece.isWhite(),piecePosition,delta,possibleMoves);
+                    checkMovesInLine(selectedPiece.isWhite(),piecePosition,delta,possibleMoves,boardToCheckOn);
                 }
                 break;
             case KNIGHT: //2 then 1
                 int[][] deltaListN = new int[][]{new int[]{-1,-2},new int[]{1,2},new int[]{-1,2},new int[]{1,-2},new int[]{-2,1},new int[]{2,1},new int[]{-2,-1},new int[]{2,-1}};
                 for(int[] delta : deltaListN){
                     int[] testedCoord = new int[] {piecePosition[0]+delta[0],piecePosition[1]+delta[1]};
-                    if(isMovePossible(selectedPiece.isWhite(),testedCoord)<=1) possibleMoves.add(testedCoord);
+                    if(isMovePossible(selectedPiece.isWhite(),testedCoord,boardToCheckOn)<=1) possibleMoves.add(testedCoord);
                 }
                 break;
             case KING: //Orthogonal and Diagonal
                 int[][] deltaListK = new int[][]{new int[]{-1,-1},new int[]{1,1},new int[]{-1,1},new int[]{1,-1},new int[]{-1,0},new int[]{1,0},new int[]{0,1},new int[]{0,-1}};
                 for(int[] delta : deltaListK){
                     int[] testedCoord = new int[] {piecePosition[0]+delta[0],piecePosition[1]+delta[1]};
-                    if(isMovePossible(selectedPiece.isWhite(),testedCoord)<=1) possibleMoves.add(testedCoord);
+                    if(isMovePossible(selectedPiece.isWhite(),testedCoord,boardToCheckOn)<=1) possibleMoves.add(testedCoord);
                 }
                 break;
             case QUEEN://Orthogonal+ and Diagonal+
                 int[][] deltaListQ = new int[][]{new int[]{-1,-1},new int[]{1,1},new int[]{-1,1},new int[]{1,-1},new int[]{-1,0},new int[]{1,0},new int[]{0,1},new int[]{0,-1}};
                 for(int[] delta : deltaListQ){
-                    checkMovesInLine(selectedPiece.isWhite(),piecePosition,delta,possibleMoves);
+                    checkMovesInLine(selectedPiece.isWhite(),piecePosition,delta,possibleMoves,boardToCheckOn);
                 }
                 break;
             
@@ -245,13 +248,13 @@ public class ChessBoard implements Serializable, AutreEventListener {
             System.out.println(c[0]+""+c[1]);*/
     }
     
-    private void checkMovesInLine(boolean color, int[] coord, int[] deltas, ArrayList<int[]> moveList){
+    private void checkMovesInLine(boolean color, int[] coord, int[] deltas, ArrayList<int[]> moveList, Piece[][] boardToCheckOn){
         int[] newCoord = new int[] {coord[0]+deltas[0],coord[1]+deltas[1]};
-        while(isMovePossible(color,newCoord)==0){
+        while(isMovePossible(color,newCoord,boardToCheckOn)==0){
             moveList.add(newCoord.clone());
             newCoord[0]+=deltas[0]; newCoord[1]+=deltas[1];
         }
-        if(isMovePossible(color,newCoord)==1) moveList.add(newCoord);
+        if(isMovePossible(color,newCoord,boardToCheckOn)==1) moveList.add(newCoord);
     }
     
     /**
@@ -261,10 +264,10 @@ public class ChessBoard implements Serializable, AutreEventListener {
     * 2 : Own piece
     * 3 : Out of board
     */
-    private int isMovePossible(boolean isAColor,int[] coord){
+    private int isMovePossible(boolean isAColor,int[] coord, Piece[][] boardToCheckOn){
         if(coord[0]<0||coord[0]>=7||coord[1]<0||coord[1]>=8) return 3;
-        if(board[coord[0]][coord[1]]==null) return 0;
-        if(isAColor!=board[coord[0]][coord[1]].isWhite()) return 1;
+        if(boardToCheckOn[coord[0]][coord[1]]==null) return 0;
+        if(isAColor!=boardToCheckOn[coord[0]][coord[1]].isWhite()) return 1;
         return 2;
     }
 
@@ -273,5 +276,88 @@ public class ChessBoard implements Serializable, AutreEventListener {
         partieFinie=true;
         //isTurnForWhite=false;
         aen.diffuserAutreEvent(new AutreEvent(this,"WIN:"+evt.getDonnee()+"-TIME"));
+    }
+    
+    
+    private MinMaxNode minMax(Piece[][] board,int iteration, boolean isTurnForWhite,MinMaxNode stepLeadingTo){
+        if(iteration==3){
+            return new MinMaxNode(stepLeadingTo.getFrom(),stepLeadingTo.getTo(),calculateBoardScore(board));
+        }
+        else{
+            ArrayList<MinMaxNode> possibleOutcomes = new ArrayList<>();
+            //int numberOfKings=0;
+            for(int i=0;i<7;i++){
+                for(int j=0;j<8;j++){
+                    if(board[i][j]!=null && board[i][j].isWhite()==isTurnForWhite){
+                        //if(board[i][j].getType()==PieceType.KING) numberOfKings++;
+                        checkPossibleMoves(i,j,board,true);
+                        Piece p =board[i][j];
+                        
+                        for(int[] possibleMove : possibleMoves){
+                            Piece[][] tempoBoard = new Piece[7][8];
+                            for(int a=0;a<7;a++) for(int b=0;b<8;b++) tempoBoard[a][b]=board[a][b];
+                            System.out.println("Step "+iteration+": "+possibleMove[0]+" "+possibleMove[1]+" for "+p.getType()+" on "+i+j);
+                            tempoBoard[i][j]=null;
+                            tempoBoard[possibleMove[0]][possibleMove[1]]=p;
+                            //debugBoard(tempoBoard);
+                            if(p.getType()==PieceType.PAWN && (possibleMove[0]==0||possibleMove[0]==6)) p.promotion(PieceType.QUEEN);
+                            MinMaxNode nodeCreated = (stepLeadingTo==null)?(new MinMaxNode(new int[]{i,j},possibleMove,0)):stepLeadingTo;
+                            possibleOutcomes.add(minMax(tempoBoard,iteration+1,!isTurnForWhite,nodeCreated));
+                        }
+                    }
+                }
+            }
+            MinMaxNode ret = possibleOutcomes.get(0);
+            Random rng = new Random();
+            for(MinMaxNode mmn : possibleOutcomes){
+                if(mmn.compareTo(ret)==0 && rng.nextBoolean()) ret=mmn;
+                else if(isTurnForWhite)
+                    if(mmn.compareTo(ret)>0) ret=mmn;
+                else if(mmn.compareTo(ret)<0) ret=mmn;
+            }
+            return ret;
+        }
+    }
+    
+    private int calculateBoardScore(Piece[][] board){
+        int res=0;
+        for(int i=0;i<7;i++){
+            for(int j=0;j<8;j++){
+                if(board[i][j]!=null){
+                    int pieceValue = 0;
+                    switch(board[i][j].getType()){
+                        case QUEEN: pieceValue=90; break;
+                        case PAWN : pieceValue=10; break;
+                        case KNIGHT : case BISHOP : pieceValue=30; break;
+                        case ROOK : pieceValue=50; break;
+                        case KING : pieceValue=350; break; //Army with just a king will be stronger than a whole army without a king
+                    }
+                    res+=pieceValue*(board[i][j].isWhite()?1:-1);
+                }
+            }
+        }
+        System.out.println("Result :"+res);
+        return res;
+    }
+    
+    private void debugBoard(Piece[][] board){
+        for(int i=6;i>=0;i--){
+            for(int j=0;j<8;j++){
+                String s=" ";
+                if(board[i][j]!=null){
+                    switch(board[i][j].getType()){
+                        case QUEEN : s="q"; break;
+                        case KING : s="k"; break;
+                        case BISHOP : s="b"; break;
+                        case KNIGHT : s="n"; break;
+                        case PAWN : s="p"; break;
+                        case ROOK : s="r"; break;
+                    }
+                    if(board[i][j].isWhite()) s=s.toUpperCase();
+                }
+                System.out.print(s+"|");
+            }
+            System.out.println("");
+        }
     }
 }
