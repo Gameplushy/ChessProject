@@ -285,18 +285,18 @@ public class ChessBoard implements Serializable, AutreEventListener {
         }
         else{
             ArrayList<MinMaxNode> possibleOutcomes = new ArrayList<>();
-            //int numberOfKings=0;
+            int numberOfKings=0;
             for(int i=0;i<7;i++){
                 for(int j=0;j<8;j++){
                     if(board[i][j]!=null && board[i][j].isWhite()==isTurnForWhite){
-                        //if(board[i][j].getType()==PieceType.KING) numberOfKings++;
+                        if(board[i][j].getType()==PieceType.KING) numberOfKings++;
                         checkPossibleMoves(i,j,board,true);
                         Piece p =board[i][j];
                         
                         for(int[] possibleMove : possibleMoves){
                             Piece[][] tempoBoard = new Piece[7][8];
                             for(int a=0;a<7;a++) for(int b=0;b<8;b++) tempoBoard[a][b]=board[a][b];
-                            System.out.println("Step "+iteration+": "+possibleMove[0]+" "+possibleMove[1]+" for "+p.getType()+" on "+i+j);
+                            //System.out.println("Step "+iteration+": "+possibleMove[0]+" "+possibleMove[1]+" for "+p.getType()+" on "+i+j);
                             tempoBoard[i][j]=null;
                             tempoBoard[possibleMove[0]][possibleMove[1]]=p;
                             //debugBoard(tempoBoard);
@@ -307,14 +307,17 @@ public class ChessBoard implements Serializable, AutreEventListener {
                     }
                 }
             }
-            MinMaxNode ret = possibleOutcomes.get(0);
+            MinMaxNode ret=null;
             Random rng = new Random();
+            //System.out.print(isTurnForWhite?"Looking for worst outcome":"Looking for best outcome");
             for(MinMaxNode mmn : possibleOutcomes){
+                //System.out.print(mmn.getScore()+"-");
+                if(ret==null) ret=mmn;
                 if(mmn.compareTo(ret)==0 && rng.nextBoolean()) ret=mmn;
-                else if(isTurnForWhite)
-                    if(mmn.compareTo(ret)>0) ret=mmn;
-                else if(mmn.compareTo(ret)<0) ret=mmn;
+                else if(isTurnForWhite && mmn.compareTo(ret)>0) ret=mmn;
+                else if(!isTurnForWhite && mmn.compareTo(ret)<0) ret=mmn;
             }
+            //System.out.println("Choosing "+ret.getScore()+" for step "+iteration);
             return ret;
         }
     }
@@ -336,7 +339,7 @@ public class ChessBoard implements Serializable, AutreEventListener {
                 }
             }
         }
-        System.out.println("Result :"+res);
+        //System.out.println("Result :"+res);
         return res;
     }
     
