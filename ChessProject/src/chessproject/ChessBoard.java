@@ -280,7 +280,13 @@ public class ChessBoard implements Serializable, AutreEventListener {
     
     
     private MinMaxNode minMax(Piece[][] board,int iteration, boolean isTurnForWhite,MinMaxNode stepLeadingTo){
-        if(iteration==3){
+        int kingCount=0;
+        for(int c=0;c<7;c++){
+           for(int r=0;r<8;r++){ 
+               if(board[c][r]!=null && board[c][r].getType()==PieceType.KING) kingCount++;
+           }    
+        }
+        if(kingCount!=2 || iteration==4){
             return new MinMaxNode(stepLeadingTo.getFrom(),stepLeadingTo.getTo(),calculateBoardScore(board));
         }
         else{
