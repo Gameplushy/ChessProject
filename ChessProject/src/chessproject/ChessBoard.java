@@ -286,7 +286,7 @@ public class ChessBoard implements Serializable, AutreEventListener {
                if(board[c][r]!=null && board[c][r].getType()==PieceType.KING) kingCount++;
            }    
         }
-        if(kingCount!=2 || iteration==4){
+        if(kingCount!=2 || iteration==4){ //End of iteration (a king died or this is row 4 of the tree)
             return new MinMaxNode(stepLeadingTo.getFrom(),stepLeadingTo.getTo(),calculateBoardScore(board));
         }
         else{
